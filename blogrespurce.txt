@@ -1,0 +1,59 @@
+{
+  "name": "BlogResource",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Blog post title"
+    },
+    "url": {
+      "type": "string",
+      "description": "Link to blog post"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "Epic Gardening",
+        "The Spruce",
+        "RHS Gardening",
+        "Farmer's Almanac",
+        "MasterClass",
+        "Other"
+      ],
+      "description": "Content source"
+    },
+    "summary": {
+      "type": "string",
+      "description": "1-2 sentence summary"
+    },
+    "related_plants": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Related plant names"
+    },
+    "topics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Topics: sustainability, pest control, composting, etc."
+    },
+    "difficulty_level": {
+      "type": "string",
+      "enum": [
+        "Beginner",
+        "Intermediate",
+        "Advanced"
+      ],
+      "description": "Content difficulty"
+    }
+  },
+  "required": [
+    "title",
+    "url",
+    "source",
+    "summary"
+  ]
+}

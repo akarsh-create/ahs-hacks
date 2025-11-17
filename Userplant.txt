@@ -1,0 +1,105 @@
+{
+  "name": "UserPlant",
+  "type": "object",
+  "properties": {
+    "plant_id": {
+      "type": "string",
+      "description": "Reference to Plant entity"
+    },
+    "plant_name": {
+      "type": "string",
+      "description": "Plant name for quick reference"
+    },
+    "nickname": {
+      "type": "string",
+      "description": "User's custom name for the plant"
+    },
+    "planted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date planted"
+    },
+    "current_stage": {
+      "type": "string",
+      "enum": [
+        "Seed",
+        "Sprout",
+        "Vegetative",
+        "Flowering",
+        "Fruiting",
+        "Harvest"
+      ],
+      "description": "Current growth stage"
+    },
+    "current_stage_index": {
+      "type": "number",
+      "description": "Index of current stage"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "User uploaded plant image"
+    },
+    "location": {
+      "type": "string",
+      "enum": [
+        "Windowsill",
+        "Balcony",
+        "Backyard",
+        "Indoor Grow Lights",
+        "Greenhouse",
+        "Container Garden"
+      ],
+      "description": "Where the plant is growing"
+    },
+    "notes": {
+      "type": "string",
+      "description": "User notes about the plant"
+    },
+    "last_watered": {
+      "type": "string",
+      "format": "date",
+      "description": "Last watering date"
+    },
+    "last_fertilized": {
+      "type": "string",
+      "format": "date",
+      "description": "Last fertilization date"
+    },
+    "health_status": {
+      "type": "string",
+      "enum": [
+        "Thriving",
+        "Healthy",
+        "Needs Attention",
+        "Critical"
+      ],
+      "default": "Healthy",
+      "description": "Plant health status"
+    },
+    "milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "achieved": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Growth milestones"
+    }
+  },
+  "required": [
+    "plant_id",
+    "plant_name",
+    "planted_date",
+    "current_stage"
+  ]
+}

@@ -1,0 +1,96 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Sun, Droplets, Clock, TrendingUp } from "lucide-react";
+
+export default function PlantCard({ plant }) {
+  const navigate = useNavigate();
+
+  const difficultyColors = {
+    "Beginner": "bg-green-100 text-green-800",
+    "Intermediate": "bg-yellow-100 text-yellow-800",
+    "Advanced": "bg-red-100 text-red-800"
+  };
+
+  const lightIcons = {
+    "Full Sun": "☀️",
+    "Partial Sun": "🌤️",
+    "Partial Shade": "⛅",
+    "Full Shade": "🌑"
+  };
+
+  return (
+    <Card 
+      onClick={() => navigate(createPageUrl("PlantDetail") + `?id=${plant.id}`)}
+      className="overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-white group"
+    >
+      {/* Image */}
+      <div className="aspect-[4/3] bg-[#E8F5E9] overflow-hidden">
+        {plant.image_url ? (
+          <img 
+            src={plant.image_url} 
+            alt={plant.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-6xl">
+            🌱
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h3 className="text-xl font-semibold text-[#1C1C1E] mb-1 group-hover:text-[#3FA34D] transition-colors">
+              {plant.name}
+            </h3>
+            {plant.scientific_name && (
+              <p className="text-sm text-gray-500 italic">
+                {plant.scientific_name}
+              </p>
+            )}
+          </div>
+          <Badge className={`${difficultyColors[plant.difficulty]} border-0`}>
+            {plant.difficulty}
+          </Badge>
+        </div>
+
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+          {plant.description || "A wonderful plant to grow"}
+        </p>
+
+        {/* Quick Info */}
+        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-100">
+          <div className="text-center">
+            <div className="text-2xl mb-1">
+              {lightIcons[plant.light_requirements] || "☀️"}
+            </div>
+            <p className="text-xs text-gray-600">
+              {plant.light_requirements?.split(' ')[0]}
+            </p>
+          </div>
+          <div className="text-center">
+            <Droplets className={`w-5 h-5 mx-auto mb-1 ${
+              plant.water_needs === "High" ? "text-blue-500" :
+              plant.water_needs === "Moderate" ? "text-blue-400" :
+              "text-blue-300"
+            }`} />
+            <p className="text-xs text-gray-600">
+              {plant.water_needs}
+            </p>
+          </div>
+          <div className="text-center">
+            <Clock className="w-5 h-5 mx-auto mb-1 text-gray-400" />
+            <p className="text-xs text-gray-600">
+              {plant.days_to_harvest ? `${plant.days_to_harvest}d` : "N/A"}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}

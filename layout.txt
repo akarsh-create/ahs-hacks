@@ -1,0 +1,123 @@
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Sprout, BookOpen, ClipboardList, Home, MessageCircle } from "lucide-react";
+import Chatbot from "@/components/Chatbot";
+
+export default function Layout({ children, currentPageName }) {
+  const location = useLocation();
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const navItems = [
+    { name: "Home", path: createPageUrl("Home"), icon: Home },
+    { name: "Library", path: createPageUrl("Library"), icon: BookOpen },
+    { name: "Quiz", path: createPageUrl("Quiz"), icon: ClipboardList },
+    { name: "My Garden", path: createPageUrl("MyGarden"), icon: Sprout },
+  ];
+
+  const isActive = (path) => location.pathname === path;
+
+  return (
+    <div className="min-h-screen bg-white">
+      <style>{`
+        :root {
+          --primary-green: #3FA34D;
+          --accent-green: #89C27D;
+          --light-green: #E8F5E9;
+          --dark-text: #1C1C1E;
+        }
+        
+        * {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+      `}</style>
+
+      {/* Desktop Navigation */}
+      <nav className="hidden md:block fixed top-0 left-0 right-0 z-50 bg-[#3FA34D] shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Link 
+              to={createPageUrl("Home")}
+              className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity"
+            >
+              <Sprout className="w-7 h-7" />
+              <span className="text-xl font-semibold tracking-tight">GrowGuide</span>
+            </Link>
+
+            <div className="flex items-center gap-8">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className={`flex items-center gap-2 text-[15px] font-medium transition-all ${
+                    isActive(item.path)
+                      ? "text-white"
+                      : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.name}
+                </Link>
+              ))}
+              <button
+                onClick={() => setIsChatOpen(!isChatOpen)}
+                className="flex items-center gap-2 text-[15px] font-medium text-white/80 hover:text-white transition-all"
+              >
+                <MessageCircle className="w-5 h-5" />
+                AI Assistant
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Top Bar */}
+      <nav className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#3FA34D] shadow-sm">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <Link 
+            to={createPageUrl("Home")}
+            className="flex items-center gap-2 text-white"
+          >
+            <Sprout className="w-6 h-6" />
+            <span className="text-lg font-semibold tracking-tight">GrowGuide</span>
+          </Link>
+          <button
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            className="text-white hover:opacity-80 transition-opacity"
+          >
+            <MessageCircle className="w-6 h-6" />
+          </button>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="pt-16 md:pt-20 pb-20 md:pb-8">
+        {children}
+      </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200">
+        <div className="grid grid-cols-4 h-16">
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`flex flex-col items-center justify-center gap-1 transition-colors ${
+                isActive(item.path)
+                  ? "text-[#3FA34D]"
+                  : "text-gray-500"
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="text-xs font-medium">{item.name}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+
+      {/* Chatbot */}
+      <Chatbot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+    </div>
+  );
+}

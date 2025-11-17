@@ -1,0 +1,301 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowRight, ArrowLeft, CheckCircle2, Sprout } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+export default function Quiz() {
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [quizData, setQuizData] = useState({
+    location: "",
+    experience_level: "",
+    space_type: [],
+    indoor_outdoor: "",
+    plant_preferences: [],
+    goals: []
+  });
+  const [loading, setLoading] = useState(false);
+
+  const steps = [
+    {
+      title: "Where are you located?",
+      subtitle: "We'll use this to recommend plants suited to your climate",
+      field: "location",
+      type: "text",
+      placeholder: "e.g., San Francisco, CA"
+    },
+    {
+      title: "What's your experience level?",
+      subtitle: "Don't worry, we'll match you with plants you can handle",
+      field: "experience_level",
+      type: "select",
+      options: [
+        { value: "Complete Beginner", label: "Complete Beginner", icon: "🌱" },
+        { value: "Some Experience", label: "Some Experience", icon: "🌿" },
+        { value: "Experienced Gardener", label: "Experienced", icon: "🌳" }
+      ]
+    },
+    {
+      title: "Where will you be growing?",
+      subtitle: "Select all that apply",
+      field: "space_type",
+      type: "multi-select",
+      options: [
+        { value: "Windowsill", label: "Windowsill", icon: "🪟" },
+        { value: "Balcony", label: "Balcony", icon: "🏡" },
+        { value: "Backyard", label: "Backyard", icon: "🌾" },
+        { value: "Indoor Grow Lights", label: "Grow Lights", icon: "💡" }
+      ]
+    },
+    {
+      title: "Indoor or outdoor?",
+      subtitle: "Or both!",
+      field: "indoor_outdoor",
+      type: "select",
+      options: [
+        { value: "Indoor", label: "Indoor", icon: "🏠" },
+        { value: "Outdoor", label: "Outdoor", icon: "☀️" },
+        { value: "Both", label: "Both", icon: "🌍" }
+      ]
+    },
+    {
+      title: "What would you like to grow?",
+      subtitle: "Select all that interest you",
+      field: "plant_preferences",
+      type: "multi-select",
+      options: [
+        { value: "Herbs", label: "Herbs", icon: "🌿" },
+        { value: "Vegetables", label: "Vegetables", icon: "🥬" },
+        { value: "Fruits", label: "Fruits", icon: "🍓" },
+        { value: "Flowers", label: "Flowers", icon: "🌸" },
+        { value: "Microgreens", label: "Microgreens", icon: "🌱" }
+      ]
+    },
+    {
+      title: "What are your goals?",
+      subtitle: "Help us understand what matters to you",
+      field: "goals",
+      type: "multi-select",
+      options: [
+        { value: "Fresh ingredients", label: "Fresh ingredients", icon: "🍽️" },
+        { value: "Sustainability", label: "Sustainability", icon: "♻️" },
+        { value: "Save money", label: "Save money", icon: "💰" },
+        { value: "Hobby/relaxation", label: "Hobby & Relaxation", icon: "🧘" },
+        { value: "Teach kids", label: "Teach kids", icon: "👨‍👩‍👧" }
+      ]
+    }
+  ];
+
+  const currentStepData = steps[currentStep];
+
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      handleComplete();
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleComplete = async () => {
+    setLoading(true);
+    try {
+      const user = await base44.auth.me();
+      await base44.auth.updateMe({
+        location: quizData.location,
+        experience_level: quizData.experience_level,
+        space_type: quizData.space_type,
+        preferences: {
+          indoor_outdoor: quizData.indoor_outdoor,
+          plant_types: quizData.plant_preferences,
+          goals: quizData.goals
+        },
+        quiz_completed: true
+      });
+      navigate(createPageUrl("Library"));
+    } catch (error) {
+      console.error("Error saving quiz:", error);
+    }
+    setLoading(false);
+  };
+
+  const handleInputChange = (value) => {
+    setQuizData({ ...quizData, [currentStepData.field]: value });
+  };
+
+  const handleMultiSelect = (value) => {
+    const current = quizData[currentStepData.field] || [];
+    const updated = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    setQuizData({ ...quizData, [currentStepData.field]: updated });
+  };
+
+  const isStepValid = () => {
+    const value = quizData[currentStepData.field];
+    if (currentStepData.type === "multi-select") {
+      return value && value.length > 0;
+    }
+    return value && value.length > 0;
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#E8F5E9] to-white py-12 px-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-gray-600">
+              Step {currentStep + 1} of {steps.length}
+            </span>
+            <span className="text-sm font-medium text-[#3FA34D]">
+              {Math.round(((currentStep + 1) / steps.length) * 100)}%
+            </span>
+          </div>
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-[#3FA34D]"
+              initial={{ width: 0 }}
+              animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+        </div>
+
+        {/* Question Card */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="p-8 md:p-12 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <div className="mb-8">
+                <h2 className="text-3xl md:text-4xl font-bold text-[#1C1C1E] mb-3">
+                  {currentStepData.title}
+                </h2>
+                <p className="text-lg text-gray-600">
+                  {currentStepData.subtitle}
+                </p>
+              </div>
+
+              <div className="mb-8">
+                {currentStepData.type === "text" && (
+                  <div>
+                    <Label className="text-base mb-2 block text-gray-700">
+                      Your location
+                    </Label>
+                    <Input
+                      value={quizData[currentStepData.field]}
+                      onChange={(e) => handleInputChange(e.target.value)}
+                      placeholder={currentStepData.placeholder}
+                      className="h-12 text-base"
+                    />
+                  </div>
+                )}
+
+                {currentStepData.type === "select" && (
+                  <div className="grid gap-3">
+                    {currentStepData.options.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => handleInputChange(option.value)}
+                        className={`p-4 rounded-xl border-2 transition-all text-left ${
+                          quizData[currentStepData.field] === option.value
+                            ? "border-[#3FA34D] bg-[#E8F5E9]"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{option.icon}</span>
+                          <span className="font-medium text-[#1C1C1E]">
+                            {option.label}
+                          </span>
+                          {quizData[currentStepData.field] === option.value && (
+                            <CheckCircle2 className="ml-auto w-5 h-5 text-[#3FA34D]" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {currentStepData.type === "multi-select" && (
+                  <div className="grid gap-3">
+                    {currentStepData.options.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => handleMultiSelect(option.value)}
+                        className={`p-4 rounded-xl border-2 transition-all text-left ${
+                          (quizData[currentStepData.field] || []).includes(option.value)
+                            ? "border-[#3FA34D] bg-[#E8F5E9]"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{option.icon}</span>
+                          <span className="font-medium text-[#1C1C1E]">
+                            {option.label}
+                          </span>
+                          {(quizData[currentStepData.field] || []).includes(option.value) && (
+                            <CheckCircle2 className="ml-auto w-5 h-5 text-[#3FA34D]" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Navigation */}
+              <div className="flex gap-3">
+                {currentStep > 0 && (
+                  <Button
+                    onClick={handleBack}
+                    variant="outline"
+                    className="h-12 px-6 border-2 border-gray-300"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </Button>
+                )}
+                <Button
+                  onClick={handleNext}
+                  disabled={!isStepValid() || loading}
+                  className="flex-1 h-12 bg-[#3FA34D] hover:bg-[#368F42] text-white font-medium"
+                >
+                  {loading ? (
+                    "Saving..."
+                  ) : currentStep === steps.length - 1 ? (
+                    <>
+                      Complete
+                      <CheckCircle2 className="w-4 h-4 ml-2" />
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}

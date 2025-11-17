@@ -1,0 +1,77 @@
+{
+  "name": "Recipe",
+  "type": "object",
+  "properties": {
+    "plant_id": {
+      "type": "string",
+      "description": "Related plant ID"
+    },
+    "plant_name": {
+      "type": "string",
+      "description": "Plant name for filtering"
+    },
+    "title": {
+      "type": "string",
+      "description": "Recipe title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description"
+    },
+    "ingredients": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ingredient list"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Cooking steps"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "Easy",
+        "Medium",
+        "Hard"
+      ],
+      "description": "Recipe difficulty"
+    },
+    "prep_time_minutes": {
+      "type": "number",
+      "description": "Preparation time"
+    },
+    "cook_time_minutes": {
+      "type": "number",
+      "description": "Cooking time"
+    },
+    "servings": {
+      "type": "number",
+      "description": "Number of servings"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "YouTube video link"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Recipe image"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Recipe tags: soups, salads, sauces, spicy, etc."
+    }
+  },
+  "required": [
+    "plant_name",
+    "title",
+    "description"
+  ]
+}

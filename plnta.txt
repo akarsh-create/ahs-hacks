@@ -1,0 +1,151 @@
+{
+  "name": "Plant",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Plant name"
+    },
+    "scientific_name": {
+      "type": "string",
+      "description": "Scientific name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Plant image URL"
+    },
+    "ideal_climate": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ideal climate zones"
+    },
+    "light_requirements": {
+      "type": "string",
+      "enum": [
+        "Full Sun",
+        "Partial Sun",
+        "Partial Shade",
+        "Full Shade"
+      ],
+      "description": "Light needs"
+    },
+    "water_needs": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Moderate",
+        "High"
+      ],
+      "description": "Water requirements"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "Beginner",
+        "Intermediate",
+        "Advanced"
+      ],
+      "description": "Growing difficulty"
+    },
+    "days_to_harvest": {
+      "type": "number",
+      "description": "Days from planting to harvest"
+    },
+    "indoor_outdoor": {
+      "type": "string",
+      "enum": [
+        "Indoor",
+        "Outdoor",
+        "Both"
+      ],
+      "description": "Growing location"
+    },
+    "space_type": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Suitable spaces: windowsill, balcony, backyard, grow lights"
+    },
+    "sustainability_benefits": {
+      "type": "string",
+      "description": "Sustainability and environmental benefits"
+    },
+    "planting_season": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Best planting seasons"
+    },
+    "growth_stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string"
+          },
+          "duration_days": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Growth timeline stages"
+    },
+    "common_pests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Common pest problems"
+    },
+    "care_instructions": {
+      "type": "object",
+      "properties": {
+        "watering": {
+          "type": "string"
+        },
+        "sunlight": {
+          "type": "string"
+        },
+        "soil": {
+          "type": "string"
+        },
+        "fertilizer": {
+          "type": "string"
+        },
+        "temperature": {
+          "type": "string"
+        }
+      },
+      "description": "Detailed care instructions"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Vegetable",
+        "Herb",
+        "Fruit",
+        "Flower",
+        "Microgreen"
+      ],
+      "description": "Plant category"
+    }
+  },
+  "required": [
+    "name",
+    "difficulty",
+    "light_requirements",
+    "water_needs"
+  ]
+}

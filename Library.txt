@@ -1,0 +1,146 @@
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Search, Filter } from "lucide-react";
+import PlantCard from "@/components/library/PlantCard";
+import { motion } from "framer-motion";
+
+export default function Library() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("All");
+
+  const { data: plants, isLoading } = useQuery({
+    queryKey: ['plants'],
+    queryFn: () => base44.entities.Plant.list(),
+    initialData: [],
+  });
+
+  const categories = ["All", "Herb", "Vegetable", "Fruit", "Flower", "Microgreen"];
+  const difficulties = ["All", "Beginner", "Intermediate", "Advanced"];
+
+  const filteredPlants = plants.filter(plant => {
+    const matchesSearch = plant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         plant.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "All" || plant.category === selectedCategory;
+    const matchesDifficulty = selectedDifficulty === "All" || plant.difficulty === selectedDifficulty;
+    return matchesSearch && matchesCategory && matchesDifficulty;
+  });
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-[#1C1C1E] mb-3">
+            Plant Library
+          </h1>
+          <p className="text-lg text-gray-600">
+            Discover plants perfect for your space and skill level
+          </p>
+        </div>
+
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search plants..."
+              className="pl-12 h-14 text-base rounded-xl border-2"
+            />
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="mb-8 space-y-4">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Filter className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Category</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {categories.map(category => (
+                <Badge
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all ${
+                    selectedCategory === category
+                      ? "bg-[#3FA34D] text-white hover:bg-[#368F42]"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {category}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Filter className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Difficulty</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {difficulties.map(difficulty => (
+                <Badge
+                  key={difficulty}
+                  onClick={() => setSelectedDifficulty(difficulty)}
+                  className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all ${
+                    selectedDifficulty === difficulty
+                      ? "bg-[#3FA34D] text-white hover:bg-[#368F42]"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {difficulty}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="mb-6">
+          <p className="text-gray-600">
+            {filteredPlants.length} {filteredPlants.length === 1 ? 'plant' : 'plants'} found
+          </p>
+        </div>
+
+        {/* Plants Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-96 bg-gray-100 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        ) : filteredPlants.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-xl text-gray-500 mb-2">No plants found</p>
+            <p className="text-gray-400">Try adjusting your filters</p>
+          </div>
+        ) : (
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {filteredPlants.map((plant, index) => (
+              <motion.div
+                key={plant.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+              >
+                <PlantCard plant={plant} />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}

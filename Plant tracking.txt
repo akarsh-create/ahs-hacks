@@ -1,0 +1,323 @@
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Droplets, Sun, Calendar, TrendingUp, Edit, Trash2, Upload } from "lucide-react";
+import { format, differenceInDays, addDays } from "date-fns";
+import { motion } from "framer-motion";
+
+export default function PlantTracking() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const urlParams = new URLSearchParams(window.location.search);
+  const userPlantId = urlParams.get("id");
+  const [notes, setNotes] = useState("");
+
+  const { data: userPlant, isLoading } = useQuery({
+    queryKey: ['userPlant', userPlantId],
+    queryFn: async () => {
+      const plants = await base44.entities.UserPlant.list();
+      const plant = plants.find(p => p.id === userPlantId);
+      setNotes(plant?.notes || "");
+      return plant;
+    },
+    enabled: !!userPlantId,
+  });
+
+  const { data: plantDetails } = useQuery({
+    queryKey: ['plant', userPlant?.plant_id],
+    queryFn: async () => {
+      const plants = await base44.entities.Plant.list();
+      return plants.find(p => p.id === userPlant.plant_id);
+    },
+    enabled: !!userPlant?.plant_id,
+  });
+
+  const updatePlantMutation = useMutation({
+    mutationFn: (data) => base44.entities.UserPlant.update(userPlantId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['userPlant', userPlantId]);
+      queryClient.invalidateQueries(['userPlants']);
+    },
+  });
+
+  const deletePlantMutation = useMutation({
+    mutationFn: () => base44.entities.UserPlant.delete(userPlantId),
+    onSuccess: () => {
+      navigate(createPageUrl("MyGarden"));
+    },
+  });
+
+  const handleWatered = () => {
+    updatePlantMutation.mutate({
+      last_watered: new Date().toISOString().split('T')[0]
+    });
+  };
+
+  const handleStageAdvance = () => {
+    const stages = ["Seed", "Sprout", "Vegetative", "Flowering", "Fruiting", "Harvest"];
+    const currentIndex = stages.indexOf(userPlant.current_stage);
+    if (currentIndex < stages.length - 1) {
+      updatePlantMutation.mutate({
+        current_stage: stages[currentIndex + 1],
+        current_stage_index: currentIndex + 1
+      });
+    }
+  };
+
+  const handleSaveNotes = () => {
+    updatePlantMutation.mutate({ notes });
+  };
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to remove this plant from your garden?")) {
+      deletePlantMutation.mutate();
+    }
+  };
+
+  if (isLoading || !userPlant) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[#3FA34D] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  const stages = ["Seed", "Sprout", "Vegetative", "Flowering", "Fruiting", "Harvest"];
+  const currentStageIndex = stages.indexOf(userPlant.current_stage);
+  const progress = ((currentStageIndex + 1) / stages.length) * 100;
+  const daysSincePlanted = differenceInDays(new Date(), new Date(userPlant.planted_date));
+  const daysSinceWatered = userPlant.last_watered
+    ? differenceInDays(new Date(), new Date(userPlant.last_watered))
+    : null;
+
+  const healthColors = {
+    "Thriving": "bg-green-100 text-green-800",
+    "Healthy": "bg-blue-100 text-blue-800",
+    "Needs Attention": "bg-yellow-100 text-yellow-800",
+    "Critical": "bg-red-100 text-red-800"
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-8">
+        {/* Back Button */}
+        <Button
+          onClick={() => navigate(createPageUrl("MyGarden"))}
+          variant="ghost"
+          className="mb-6 -ml-2"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Garden
+        </Button>
+
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          {/* Image */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="aspect-square bg-[#E8F5E9] rounded-3xl overflow-hidden shadow-lg relative">
+              {userPlant.image_url ? (
+                <img
+                  src={userPlant.image_url}
+                  alt={userPlant.nickname || userPlant.plant_name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-9xl">
+                  🌱
+                </div>
+              )}
+              <Badge className={`absolute top-4 right-4 ${healthColors[userPlant.health_status]} text-base px-4 py-1`}>
+                {userPlant.health_status}
+              </Badge>
+            </div>
+          </motion.div>
+
+          {/* Info */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <h1 className="text-4xl font-bold text-[#1C1C1E] mb-2">
+              {userPlant.nickname || userPlant.plant_name}
+            </h1>
+            {userPlant.nickname & (
+              <p className="text-lg text-gray-600 mb-6">
+                {userPlant.plant_name}
+              </p>
+            )}
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <Button
+                onClick={handleWatered}
+                className="h-14 bg-blue-500 hover:bg-blue-600 text-white"
+                disabled={updatePlantMutation.isPending}
+              >
+                <Droplets className="w-5 h-5 mr-2" />
+                Mark Watered
+              </Button>
+              <Button
+                onClick={handleStageAdvance}
+                className="h-14 bg-[#3FA34D] hover:bg-[#368F42] text-white"
+                disabled={currentStageIndex === stages.length - 1 || updatePlantMutation.isPending}
+              >
+                <TrendingUp className="w-5 h-5 mr-2" />
+                Next Stage
+              </Button>
+            </div>
+
+            {/* Stats */}
+            <div className="space-y-4 mb-6">
+              <Card className="p-4 border-0 bg-[#E8F5E9]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-5 h-5 text-[#3FA34D]" />
+                    <span className="font-medium text-[#1C1C1E]">
+                      Planted {format(new Date(userPlant.planted_date), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-600">
+                    Day {daysSincePlanted}
+                  </span>
+                </div>
+              </Card>
+
+              {daysSinceWatered !== null && (
+                <Card className="p-4 border-0 bg-blue-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Droplets className="w-5 h-5 text-blue-600" />
+                      <span className="font-medium text-[#1C1C1E]">
+                        Last watered {format(new Date(userPlant.last_watered), "MMM d")}
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-600">
+                      {daysSinceWatered}d ago
+                    </span>
+                  </div>
+                </Card>
+              )}
+
+              <Card className="p-4 border-0 bg-[#E8F5E9]">
+                <div className="flex items-center gap-3">
+                  <span className="font-medium text-[#1C1C1E]">📍 {userPlant.location}</span>
+                </div>
+              </Card>
+            </div>
+
+            <Button
+              onClick={handleDelete}
+              variant="outline"
+              className="w-full border-2 border-red-200 text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Remove from Garden
+            </Button>
+          </motion.div>
+        </div>
+
+        {/* Growth Progress */}
+        <Card className="p-8 mb-8 border-0 shadow-sm">
+          <h2 className="text-2xl font-bold text-[#1C1C1E] mb-6">
+            Growth Progress
+          </h2>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-lg font-semibold text-[#3FA34D]">
+                {userPlant.current_stage}
+              </span>
+              <span className="text-gray-600">
+                Stage {currentStageIndex + 1} of {stages.length}
+              </span>
+            </div>
+            <Progress value={progress} className="h-3" />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {stages.map((stage, index) => (
+              <div
+                key={stage}
+                className={`text-center p-3 rounded-lg ${
+                  index <= currentStageIndex
+                    ? "bg-[#E8F5E9] text-[#3FA34D]"
+                    : "bg-gray-100 text-gray-400"
+                }`}
+              >
+                <div className="font-semibold mb-1">{stage}</div>
+                <div className="text-xs">
+                  {index < currentStageIndex && "✓"}
+                  {index === currentStageIndex && "Current"}
+                  {index > currentStageIndex && "Upcoming"}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Today's Care (from plant details) */}
+        {plantDetails && (
+          <Card className="p-8 mb-8 border-0 shadow-sm bg-gradient-to-br from-[#E8F5E9] to-white">
+            <h2 className="text-2xl font-bold text-[#1C1C1E] mb-6">
+              Today's Care Guide
+            </h2>
+            <div className="space-y-4">
+              {plantDetails.care_instructions?.watering && (
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <Droplets className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-[#1C1C1E] mb-1">Watering</h3>
+                    <p className="text-gray-700">{plantDetails.care_instructions.watering}</p>
+                  </div>
+                </div>
+              )}
+              {plantDetails.care_instructions?.sunlight && (
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                    <Sun className="w-4 h-4 text-yellow-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-[#1C1C1E] mb-1">Sunlight</h3>
+                    <p className="text-gray-700">{plantDetails.care_instructions.sunlight}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {/* Notes */}
+        <Card className="p-8 border-0 shadow-sm">
+          <h2 className="text-2xl font-bold text-[#1C1C1E] mb-4">
+            My Notes
+          </h2>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Add notes about your plant's progress, observations, or reminders..."
+            className="min-h-32 mb-4"
+          />
+          <Button
+            onClick={handleSaveNotes}
+            className="bg-[#3FA34D] hover:bg-[#368F42] text-white"
+            disabled={updatePlantMutation.isPending}
+          >
+            Save Notes
+          </Button>
+        </Card>
+      </div>
+    </div>
+  );
+}
